@@ -49,6 +49,9 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/interventions/{intervention}/validate', [InterventionController::class, 'validateIntervention'])->name('interventions.validate');
     Route::get('/interventions/{intervention}/pdf', [InterventionController::class, 'downloadPdf'])->name('interventions.pdf');
 
+    // Gestion des plannings
+    Route::resource('planning', \App\Http\Controllers\PlanningController::class);
+
     // Placeholders restants
     // Route::get('/expenses', function () { return Inertia::render('Dashboard'); });
     Route::post('/expenses/calculate-distance', [\App\Http\Controllers\ExpenseController::class, 'calculateDistance'])

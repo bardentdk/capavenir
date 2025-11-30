@@ -8,6 +8,7 @@ import {
   BanknotesIcon,
   Bars3Icon,
   XMarkIcon,
+  CalendarDaysIcon,
   UserGroupIcon,
   ChartPieIcon,
   ArrowRightOnRectangleIcon,
@@ -23,6 +24,7 @@ const navigation = [
   { name: 'Mes Frais', href: '/expenses', icon: BanknotesIcon },
   { name: 'Bénéficiaires', href: '/clients', icon: UsersIcon },
   { name: 'Comptabilité', href: '/accounting', icon: ChartPieIcon },
+  { name: 'Agenda', href: '/planning', icon: CalendarDaysIcon },
   { name: 'Équipe', href: '/users', icon: UserGroupIcon },
 ]
 
