@@ -21,14 +21,19 @@ const submit = () => {
 <template>
     <Head title="Connexion à l'espace sécurisé" />
 
-    <div class="min-h-screen w-full flex bg-white">
+    <div class="min-h-screen w-full flex bg-white overflow-hidden">
 
         <div class="hidden lg:flex w-1/2 relative overflow-hidden bg-slate-900">
             <img
-                src="https://images.unsplash.com/photo-1542038784456-1ea8e935640e?q=80&w=2070&auto=format&fit=crop"
+                src="https://www.autismeinfoservice.fr/sites/default/files/2019-03/scolarite_et_soins_autisme_0.jpg"
                 class="absolute inset-0 w-full h-full object-cover opacity-60"
                 alt="Background"
             />
+            <!-- <img
+                src="https://images.unsplash.com/photo-1542038784456-1ea8e935640e?q=80&w=2070&auto=format&fit=crop"
+                class="absolute inset-0 w-full h-full object-cover opacity-60"
+                alt="Background"
+            /> -->
 
             <div class="absolute inset-0 bg-gradient-to-br from-[#881337]/80 to-[#4c0519]/90 mix-blend-multiply"></div>
 
@@ -46,10 +51,14 @@ const submit = () => {
                 </div>
 
                 <div class="space-y-6">
-                    <h2 class="text-4xl font-serif font-bold leading-tight">
+                    <h2 class="z-[999] text-4xl md:text-6xl font-serif font-semibold leading-tight">
+                      <span class="">
                         Accompagner,<br>
                         Soutenir,<br>
-                        <span class="text-rose-200">Construire demain.</span>
+                      </span>
+                    </h2>
+                    <h2 class="text-4xl md:text-6xl font-serif font-semibold leading-tight">
+                        <span class="z-[0] bg-linear-to-r from-(--color-capavenir) to-[#881337] p-2  text-shadow text-shadow-white font-itc bold text-8xl">Construire demain.</span>
                     </h2>
                     <p class="text-rose-100/80 text-lg max-w-md font-light leading-relaxed">
                         Bienvenue sur votre outil de gestion dédié. Simplifiez vos démarches administratives pour vous concentrer sur l'essentiel : l'humain.
@@ -158,7 +167,7 @@ const submit = () => {
                         <button
                             type="submit"
                             :disabled="form.processing"
-                            class="group relative w-full flex justify-center py-3.5 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-[#881337] hover:bg-[#be185d] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#881337] transition-all duration-200 shadow-lg shadow-[#881337]/30 hover:shadow-[#881337]/50 disabled:opacity-70 disabled:cursor-not-allowed overflow-hidden"
+                            class="hover:cursor-pointer group relative w-full flex justify-center py-3.5 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-[#881337] hover:bg-[#be185d] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#881337] transition-all duration-200 shadow-lg shadow-[#881337]/30 hover:shadow-[#881337]/50 disabled:opacity-70 disabled:cursor-not-allowed overflow-hidden"
                         >
                             <span class="absolute right-4 flex items-center opacity-0 group-hover:opacity-100 group-hover:translate-x-0 -translate-x-2 transition-all duration-200">
                                 <ArrowRightIcon class="w-5 h-5" />
