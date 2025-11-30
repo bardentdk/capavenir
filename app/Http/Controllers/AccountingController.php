@@ -16,17 +16,65 @@ class AccountingController extends Controller
     /**
      * Dashboard principal de la compta.
      */
+    // public function index(Request $request)
+    // {
+    //     // Sécurité : Seul Admin ou Compta passe (On utilise Spatie plus tard, ici check simple)
+    //     if (!Auth::user()->hasRole(['admin', 'accountant'])) {
+    //         abort(403, 'Accès réservé au service comptabilité.');
+    //     }
+
+    //     // Filtre par mois (par défaut le mois courant)
+    //     $month = $request->input('month', now()->format('Y-m'));
+
+    //     // 1. Récupérer les Frais en attente (tous)
+    //     $pendingExpenses = Expense::with(['user', 'client'])
+    //         ->where('status', 'pending')
+    //         ->latest('expense_date')
+    //         ->get()
+    //         ->map(fn($e) => [
+    //             'id' => $e->id,
+    //             'user_name' => $e->user->name,
+    //             'type' => $e->type, // mileage / purchase
+    //             'amount' => $e->amount,
+    //             'date' => $e->expense_date->format('d/m/Y'),
+    //             'description' => $e->type === 'mileage'
+    //                 ? "Trajet {$e->distance_km} km ({$e->start_address} -> {$e->end_address})"
+    //                 : "Achat (Justificatif fourni)",
+    //             'proof_url' => $e->proof_path ? \Illuminate\Support\Facades\Storage::url($e->proof_path) : null,
+    //         ]);
+
+    //     // 2. Récupérer les totaux d'heures par Éducateur pour le mois sélectionné
+    //     // C'est crucial pour la paie : combien d'heures à payer ce mois-ci ?
+    //     $payrollSummary = User::role('educator') // Suppose que tu as bien le rôle
+    //         ->withSum(['interventions' => function ($query) use ($month) {
+    //             $query->where('status', 'validated') // Seulement celles validées par l'éduc
+    //                   ->where('start_at', 'like', "$month%");
+    //         }], 'duration_minutes')
+    //         ->get()
+    //         ->map(fn($u) => [
+    //             'id' => $u->id,
+    //             'name' => $u->name,
+    //             'total_hours' => floor(($u->interventions_sum_duration_minutes ?? 0) / 60),
+    //             'total_minutes' => ($u->interventions_sum_duration_minutes ?? 0) % 60,
+    //             'raw_minutes' => $u->interventions_sum_duration_minutes ?? 0,
+    //         ]);
+
+    //     return Inertia::render('Accounting/Dashboard', [
+    //         'pendingExpenses' => $pendingExpenses,
+    //         'payrollSummary' => $payrollSummary,
+    //         'currentMonth' => $month,
+    //     ]);
+    // }
+
     public function index(Request $request)
     {
-        // Sécurité : Seul Admin ou Compta passe (On utilise Spatie plus tard, ici check simple)
         if (!Auth::user()->hasRole(['admin', 'accountant'])) {
             abort(403, 'Accès réservé au service comptabilité.');
         }
 
-        // Filtre par mois (par défaut le mois courant)
         $month = $request->input('month', now()->format('Y-m'));
 
-        // 1. Récupérer les Frais en attente (tous)
+        // 1. Frais en attente (Reste inchangé : on veut voir ceux qui demandent une action, peu importe la date)
         $pendingExpenses = Expense::with(['user', 'client'])
             ->where('status', 'pending')
             ->latest('expense_date')
@@ -34,20 +82,19 @@ class AccountingController extends Controller
             ->map(fn($e) => [
                 'id' => $e->id,
                 'user_name' => $e->user->name,
-                'type' => $e->type, // mileage / purchase
+                'type' => $e->type,
                 'amount' => $e->amount,
                 'date' => $e->expense_date->format('d/m/Y'),
                 'description' => $e->type === 'mileage'
-                    ? "Trajet {$e->distance_km} km ({$e->start_address} -> {$e->end_address})"
-                    : "Achat (Justificatif fourni)",
+                    ? "Trajet {$e->distance_km} km"
+                    : "Achat",
                 'proof_url' => $e->proof_path ? \Illuminate\Support\Facades\Storage::url($e->proof_path) : null,
             ]);
 
-        // 2. Récupérer les totaux d'heures par Éducateur pour le mois sélectionné
-        // C'est crucial pour la paie : combien d'heures à payer ce mois-ci ?
-        $payrollSummary = User::role('educator') // Suppose que tu as bien le rôle
+        // 2. Synthèse Paie (Reste inchangé)
+        $payrollSummary = User::role('educator')
             ->withSum(['interventions' => function ($query) use ($month) {
-                $query->where('status', 'validated') // Seulement celles validées par l'éduc
+                $query->where('status', 'validated')
                       ->where('start_at', 'like', "$month%");
             }], 'duration_minutes')
             ->get()
@@ -59,9 +106,28 @@ class AccountingController extends Controller
                 'raw_minutes' => $u->interventions_sum_duration_minutes ?? 0,
             ]);
 
+        // --- 3. NOUVEAU : Historique complet du mois sélectionné ---
+        $history = Expense::with(['user'])
+            ->where('expense_date', 'like', "$month%") // Filtre par le mois du sélecteur
+            ->latest('expense_date')
+            ->get()
+            ->map(fn($e) => [
+                'id' => $e->id,
+                'date' => $e->expense_date->format('d/m/Y'),
+                'user_name' => $e->user->name,
+                'type_label' => $e->type === 'mileage' ? '🚗 Kilométrique' : '💶 Achat',
+                'description' => $e->type === 'mileage'
+                    ? "{$e->distance_km} km ({$e->start_address} → {$e->end_address})"
+                    : "Achat divers",
+                'amount' => number_format($e->amount, 2, ',', ' '),
+                'status' => $e->status, // pending, approved, rejected
+                'proof_url' => $e->proof_path ? \Illuminate\Support\Facades\Storage::url($e->proof_path) : null,
+            ]);
+
         return Inertia::render('Accounting/Dashboard', [
             'pendingExpenses' => $pendingExpenses,
             'payrollSummary' => $payrollSummary,
+            'history' => $history, // <--- On passe la nouvelle variable
             'currentMonth' => $month,
         ]);
     }

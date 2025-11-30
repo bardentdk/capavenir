@@ -38,7 +38,16 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $request->user() ? [
+                    'id' => $request->user()->id,
+                    'name' => $request->user()->name,
+                    'email' => $request->user()->email,
+                    'roles' => $request->user()->getRoleNames(),
+                    // Ajout de l'URL de l'avatar
+                    'avatar' => $request->user()->avatar_path
+                        ? \Illuminate\Support\Facades\Storage::url($request->user()->avatar_path)
+                        : null,
+                ] : null,
             ],
             // On partage les messages flash (succès, erreur)
             'flash' => [

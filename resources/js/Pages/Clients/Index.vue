@@ -45,7 +45,7 @@ const deleteClient = (client) => {
                 <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                     <MagnifyingGlassIcon class="h-5 w-5 text-slate-400" />
                 </div>
-                <input v-model="search" type="text" class="block w-full rounded-md border-slate-300 pl-10 focus:border-sky-500 focus:ring-sky-500 sm:text-sm" placeholder="Rechercher par nom...">
+                <input v-model="search" type="text" class="px-3 py-3 block w-full sm:w-full rounded-md border-slate-300 pl-10 focus:border-sky-500 focus:ring-sky-500 sm:text-sm" placeholder="Rechercher par nom...">
             </div>
         </div>
 

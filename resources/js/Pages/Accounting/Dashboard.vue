@@ -3,10 +3,12 @@ import { Head, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { ref } from 'vue';
 import { CheckCircleIcon, XCircleIcon, EyeIcon } from '@heroicons/vue/24/outline';
+import MonthPicker from '@/Components/MonthPicker.vue';
 
 const props = defineProps({
     pendingExpenses: Array,
     payrollSummary: Array,
+    history: Array,
     currentMonth: String
 });
 
@@ -14,8 +16,9 @@ const rejectionReason = ref('');
 const rejectingId = ref(null);
 
 // Changer de mois
-const updateMonth = (e) => {
-    router.get('/accounting', { month: e.target.value }, { preserveState: true });
+const updateMonth = (newValue) => {
+    // router.get('/accounting', { month: e.target.value }, { preserveState: true });
+    router.get('/accounting', { month: newValue }, { preserveState: true });
 };
 
 // Actions Frais
@@ -46,10 +49,13 @@ const confirmReject = () => {
         <div class="flex justify-between items-center mb-8">
             <h1 class="text-2xl font-bold text-slate-900">Suivi & Validation Paie</h1>
 
-            <div class="flex items-center gap-2">
-                <label class="text-sm font-medium text-slate-700">Période :</label>
-                <input type="month" :value="currentMonth" @change="updateMonth"
-                    class="rounded-md border-slate-300 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500">
+            <div class="flex items-center gap-3 bg-white p-1.5 rounded-lg border border-slate-200 shadow-sm">
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider pl-2">Période :</span>
+
+                <MonthPicker
+                    :model-value="currentMonth"
+                    @change="updateMonth"
+                />
             </div>
         </div>
 
@@ -137,6 +143,51 @@ const confirmReject = () => {
                     </ul>
                 </div>
             </div>
+        </div>
+        <div class="mt-8 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="bg-slate-50 px-6 py-4 border-b border-slate-200">
+                <h2 class="font-semibold text-slate-800">Historique des Frais ({{ currentMonth }})</h2>
+                <p class="text-xs text-slate-500">Liste complète des demandes traitées et en cours pour la période.</p>
+            </div>
+            <table class="min-w-full divide-y divide-slate-200">
+                <thead class="bg-slate-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Date</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Éducateur</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Type & Détail</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">Montant</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase">Statut</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase">Preuve</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-slate-200">
+                    <tr v-for="item in history" :key="item.id" class="hover:bg-slate-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{{ item.date }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{{ item.user_name }}</td>
+                        <td class="px-6 py-4 text-sm text-slate-500">
+                            <span class="block font-medium text-slate-700">{{ item.type_label }}</span>
+                            <span class="text-xs truncate max-w-xs block">{{ item.description }}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-bold text-slate-800">{{ item.amount }} €</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                            <span v-if="item.status === 'approved'" class="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-800">Validé</span>
+                            <span v-else-if="item.status === 'rejected'" class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">Rejeté</span>
+                            <span v-else class="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800">En attente</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                            <a v-if="item.proof_url" :href="item.proof_url" target="_blank" class="text-sky-600 hover:text-sky-900 flex justify-center" title="Voir le justificatif">
+                                <EyeIcon class="w-5 h-5" />
+                            </a>
+                            <span v-else class="text-slate-300">-</span>
+                        </td>
+                    </tr>
+                    <tr v-if="history.length === 0">
+                        <td colspan="6" class="px-6 py-8 text-center text-sm text-slate-500 italic">
+                            Aucun historique de frais pour ce mois-ci.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </AppLayout>
 </template>

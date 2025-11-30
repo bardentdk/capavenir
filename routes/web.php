@@ -21,6 +21,8 @@ Route::middleware('guest')->group(function () {
 Route::post('logout', [LoginController::class, 'destroy'])
     ->middleware('auth')
     ->name('logout');
+
+
 Route::resource('users', \App\Http\Controllers\UserController::class)->only(['index', 'create', 'store']);
 // SECTION COMPTABILITÉ
 Route::prefix('accounting')->middleware(['auth'])->group(function () {
@@ -31,9 +33,12 @@ Route::prefix('accounting')->middleware(['auth'])->group(function () {
 // --- APP PROTÉGÉE ---
 Route::middleware(['auth'])->group(function () {
 
-    Route::get('/dashboard', function () {
-        return Inertia::render('Dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
+
+    // PROFIL UTILISATEUR
+    Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
+    Route::post('/profile', [\App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update'); // POST pour gérer l'upload fichier plus facilement
+    Route::put('/profile/password', [\App\Http\Controllers\ProfileController::class, 'updatePassword'])->name('profile.password');
 
     // ROUTES INTERVENTIONS (CRUD)
     Route::get('/interventions', [InterventionController::class, 'index'])->name('interventions.index');

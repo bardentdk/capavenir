@@ -38,33 +38,33 @@ const submit = () => {
                     <div class="grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-2">
                         <div>
                             <label class="block text-sm font-medium text-slate-900">Prénom</label>
-                            <input type="text" v-model="form.first_name" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm">
+                            <input type="text" v-model="form.first_name" class="px-3 py-3 mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm">
                             <div v-if="form.errors.first_name" class="text-red-500 text-xs mt-1">{{ form.errors.first_name }}</div>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-slate-900">Nom</label>
-                            <input type="text" v-model="form.last_name" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm">
+                            <input type="text" v-model="form.last_name" class="px-3 py-3 mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm">
                             <div v-if="form.errors.last_name" class="text-red-500 text-xs mt-1">{{ form.errors.last_name }}</div>
                         </div>
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-slate-900">Date de naissance</label>
-                        <input type="date" v-model="form.birth_date" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm">
+                        <input type="date" v-model="form.birth_date" class="px-3 py-3 mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm">
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-slate-900">Adresse principale</label>
-                        <input type="text" v-model="form.address" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm">
+                        <input type="text" v-model="form.address" class="px-3 py-3 mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm">
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-slate-900">Informations Médicales / Alertes</label>
-                        <textarea v-model="form.medical_info" rows="3" placeholder="Allergies, traitement, régime..." class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm"></textarea>
+                        <textarea v-model="form.medical_info" rows="3" placeholder="Allergies, traitement, régime..." class="px-3 py-3 mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm"></textarea>
                     </div>
 
                     <div v-if="isEditing" class="flex items-center gap-2">
-                        <input type="checkbox" v-model="form.is_active" id="active" class="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-600">
+                        <input type="checkbox" v-model="form.is_active" id="active" class="px-3 py-3 h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-600">
                         <label for="active" class="text-sm font-medium text-slate-900">Dossier Actif</label>
                     </div>
 

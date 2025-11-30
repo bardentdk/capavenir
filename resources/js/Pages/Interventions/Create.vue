@@ -63,7 +63,7 @@ const submit = () => {
 
                     <div>
                         <label class="block text-sm font-medium leading-6 text-slate-900">Bénéficiaire</label>
-                        <select v-model="form.client_id" class="mt-2 block w-full rounded-md border-0 py-2.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-sky-600 sm:text-sm sm:leading-6">
+                        <select v-model="form.client_id" class="px-3 mt-2 block w-full rounded-md border-0 py-2.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-sky-600 sm:text-sm sm:leading-6">
                             <option value="" disabled>Choisir un enfant...</option>
                             <option v-for="client in clients" :key="client.id" :value="client.id">
                                 {{ client.name }}
@@ -74,15 +74,15 @@ const submit = () => {
                     <div class="grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-2">
                         <div>
                             <label class="block text-sm font-medium leading-6 text-slate-900">Début</label>
-                            <input type="datetime-local" v-model="form.start_at" class="mt-2 block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-sky-600 sm:text-sm sm:leading-6">
+                            <input type="datetime-local" v-model="form.start_at" class="px-3 mt-2 block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-sky-600 sm:text-sm sm:leading-6">
                         </div>
                         <div>
                             <label class="block text-sm font-medium leading-6 text-slate-900">Fin</label>
-                            <input type="datetime-local" v-model="form.end_at" class="mt-2 block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-sky-600 sm:text-sm sm:leading-6">
+                            <input type="datetime-local" v-model="form.end_at" class="px-3 mt-2 block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-sky-600 sm:text-sm sm:leading-6">
                         </div>
                         <div>
                             <label class="block text-sm font-medium leading-6 text-slate-900">Type</label>
-                            <select v-model="form.intervention_type" class="mt-2 block w-full rounded-md border-0 py-2.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-sky-600 sm:text-sm sm:leading-6">
+                            <select v-model="form.intervention_type" class="px-3 mt-2 block w-full rounded-md border-0 py-2.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-sky-600 sm:text-sm sm:leading-6">
                                 <option>Accompagnement éducatif</option>
                                 <option>Entretien familial</option>
                                 <option>Synthèse</option>
@@ -90,7 +90,7 @@ const submit = () => {
                         </div>
                         <div>
                             <label class="block text-sm font-medium leading-6 text-slate-900">Lieu</label>
-                            <select v-model="form.location_type" class="mt-2 block w-full rounded-md border-0 py-2.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-sky-600 sm:text-sm sm:leading-6">
+                            <select v-model="form.location_type" class="px-3 mt-2 block w-full rounded-md border-0 py-2.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-sky-600 sm:text-sm sm:leading-6">
                                 <option>Domicile</option>
                                 <option>École</option>
                                 <option>Extérieur</option>
@@ -105,7 +105,7 @@ const submit = () => {
                                 <label class="block text-sm font-medium leading-6 text-slate-900">Notes Brutes</label>
                                 <span class="text-xs text-slate-400">Vos mots-clés</span>
                             </div>
-                            <textarea v-model="form.raw_notes" rows="8" placeholder="- Enfant calme au début&#10;- Crise lors des devoirs de maths&#10;- Gestion par la respiration&#10;- Retour au calme, goûter ok" class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-sky-600 sm:text-sm sm:leading-6"></textarea>
+                            <textarea v-model="form.raw_notes" rows="8" placeholder="- Enfant calme au début&#10;- Crise lors des devoirs de maths&#10;- Gestion par la respiration&#10;- Retour au calme, goûter ok" class="py-3 px-3 block w-full rounded-md border-0 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-sky-600 sm:text-sm sm:leading-6"></textarea>
 
                             <div class="mt-3 text-right">
                                 <button type="button" @click="generateAiReport" :disabled="isGenerating || !form.raw_notes"
@@ -120,7 +120,7 @@ const submit = () => {
                         <div class="relative">
                             <label class="block text-sm font-medium leading-6 text-slate-900 mb-2">Compte Rendu Final</label>
                             <div class="relative">
-                                <textarea v-model="form.ai_report" rows="12" class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 bg-slate-50"></textarea>
+                                <textarea v-model="form.ai_report" rows="12" class="px-3 block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 bg-slate-50"></textarea>
 
                                 <div v-if="!form.ai_report && !isGenerating" class="absolute inset-0 flex items-center justify-center pointer-events-none">
                                     <p class="text-sm text-slate-400 italic">Le rapport généré apparaîtra ici...</p>

@@ -65,12 +65,12 @@
 
                     <div>
                         <label class="block text-sm font-medium text-slate-900">Date</label>
-                        <input type="date" v-model="form.expense_date" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm">
+                        <input type="date" v-model="form.expense_date" class="px-3 py-3 mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm">
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-slate-900">Bénéficiaire (Optionnel)</label>
-                        <select v-model="form.client_id" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm">
+                        <select v-model="form.client_id" class="px-3 py-3 mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm">
                             <option value="">Aucun / Frais général</option>
                             <option v-for="c in clients" :key="c.id" :value="c.id">{{ c.name }}</option>
                         </select>
@@ -80,12 +80,12 @@
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-slate-900">Départ</label>
-                                <input type="text" v-model="form.start_address" placeholder="Bureau, Domicile..." class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm">
+                                <input type="text" v-model="form.start_address" placeholder="Bureau, Domicile..." class="px-3 py-3 mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm">
                                 <p v-if="form.errors.start_address" class="text-red-500 text-xs mt-1">{{ form.errors.start_address }}</p>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-slate-900">Arrivée</label>
-                                <input type="text" v-model="form.end_address" placeholder="Adresse client..." class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm">
+                                <input type="text" v-model="form.end_address" placeholder="Adresse client..." class="px-3 py-3 mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm">
                                 <p v-if="form.errors.end_address" class="text-red-500 text-xs mt-1">{{ form.errors.end_address }}</p>
                             </div>
                         </div>
@@ -93,7 +93,7 @@
                         <div>
                             <label class="block text-sm font-medium text-slate-900">Distance (km)</label>
                             <div class="relative mt-1 rounded-md shadow-sm">
-                                <input type="number" step="0.1" v-model="form.distance_km" class="block w-full rounded-md border-slate-300 pr-12 focus:border-sky-500 focus:ring-sky-500 sm:text-sm" placeholder="0.0">
+                                <input type="number" step="0.1" v-model="form.distance_km" class="px-3 py-3 block w-full rounded-md border-slate-300 pr-12 focus:border-sky-500 focus:ring-sky-500 sm:text-sm" placeholder="0.0">
                                 <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
                                     <span class="text-slate-500 sm:text-sm">km</span>
                                 </div>
@@ -113,14 +113,14 @@
                                 <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                                     <span class="text-slate-500 sm:text-sm">€</span>
                                 </div>
-                                <input type="number" step="0.01" v-model="form.amount" class="block w-full rounded-md border-slate-300 pl-7 pr-12 focus:border-sky-500 focus:ring-sky-500 sm:text-sm" placeholder="0.00">
+                                <input type="number" step="0.01" v-model="form.amount" class="px-3 py-3 block w-full rounded-md border-slate-300 pl-7 pr-12 focus:border-sky-500 focus:ring-sky-500 sm:text-sm" placeholder="0.00">
                             </div>
                              <p v-if="form.errors.amount" class="text-red-500 text-xs mt-1">{{ form.errors.amount }}</p>
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-slate-900">Justificatif (Photo/PDF)</label>
-                            <input type="file" @change="handleFile" class="mt-2 block w-full text-sm text-slate-500
+                            <input type="file" @change="handleFile" class="px-3 py-3  mt-2 block w-full text-sm text-slate-500
                                 file:mr-4 file:py-2 file:px-4
                                 file:rounded-full file:border-0
                                 file:text-sm file:font-semibold
