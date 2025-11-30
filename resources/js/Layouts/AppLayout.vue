@@ -1,0 +1,112 @@
+<script setup>
+import { ref, computed } from 'vue'
+import { Link, usePage } from '@inertiajs/vue3'
+import {
+  HomeIcon,
+  UsersIcon,
+  ClipboardDocumentCheckIcon,
+  BanknotesIcon,
+  Bars3Icon,
+  XMarkIcon,
+  UserGroupIcon,
+  ChartPieIcon,
+  ArrowRightOnRectangleIcon,
+} from '@heroicons/vue/24/outline'
+
+const showingNavigationDropdown = ref(false)
+const page = usePage()
+// const user = page.props.auth.user // On récupère l'user connecté
+const user = computed(() => page.props.auth?.user)
+
+// Navigation (statique pour l'instant, on filtrera par rôle plus tard)
+const navigation = [
+  { name: 'Tableau de bord', href: '/dashboard', icon: HomeIcon },
+  { name: 'Mes Interventions', href: '/interventions', icon: ClipboardDocumentCheckIcon },
+  { name: 'Mes Frais', href: '/expenses', icon: BanknotesIcon },
+  // Visible seulement pour Admin/Compta (plus tard)
+  { name: 'Bénéficiaires', href: '/clients', icon: UsersIcon },
+  { name: 'Comptabilité', href: '/accounting', icon: ChartPieIcon },
+  { name: 'Équipe', href: '/users', icon: UserGroupIcon },
+]
+
+// Fonction utilitaire pour vérifier l'URL active
+const isUrl = (...urls) => {
+  let currentUrl = page.url.substr(1)
+  if (urls[0] === '') return currentUrl === ''
+  return urls.filter((url) => currentUrl.startsWith(url)).length
+}
+</script>
+
+<template>
+  <div class="min-h-screen bg-slate-50 flex"> <div v-if="showingNavigationDropdown" class="fixed inset-0 z-40 bg-slate-900/50 lg:hidden backdrop-blur-sm" @click="showingNavigationDropdown = false"></div>
+
+    <div :class="[
+        showingNavigationDropdown ? 'translate-x-0' : '-translate-x-full',
+        'fixed inset-y-0 left-0 z-50 w-76 bg-white text-(--color-capavenir) transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 shadow-xl lg:shadow-none flex flex-col'
+      ]">
+      <div class="flex items-center justify-between h-16 bg-(--color-capavenir-brown) border-b border-slate-800 shrink-0">
+        <div class="flex justify-center items-center align-middle gap-0">
+            <!-- <div class="w-8 h-8 bg-sky-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">S</div>
+            <span class="text-lg font-bold tracking-wide text-white">SocialCare</span> -->
+            <img
+              src="https://assets.zyrosite.com/cdn-cgi/image/format=auto,w=768,fit=crop,q=95/AwvDBJ4r6bcKnbVp/logo-cap-avenir-fini-mePb61Q7O5TpkZQ3.png"
+              alt="Logo Cap Avenir"
+              class="h-20 flex items-center justify-center"
+            />
+              <div class="flex">
+                <span class="font-itc text-3xl text-white">C</span>
+                <span class="text-xl font-bold tracking-wide text-white font-serif">ap Avenir</span>
+              </div>
+        </div>
+        <button @click="showingNavigationDropdown = false" class="lg:hidden text-slate-400 hover:text-white">
+          <XMarkIcon class="w-6 h-6" />
+        </button>
+      </div>
+
+      <nav class="mt-6 px-3 space-y-1 flex-1 overflow-y-auto">
+        <Link v-for="item in navigation" :key="item.name" :href="item.href"
+          :class="[
+            isUrl(item.href.substring(1))
+              ? 'bg-(--color-capavenir-brown) text-white shadow-md'
+              : 'text-(--color-capavenir) hover:bg-slate-800 hover:text-white',
+            'group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-all duration-200'
+          ]">
+          <component :is="item.icon"
+            :class="[
+              isUrl(item.href.substring(1)) ? 'text-white' : 'text-(--color-capavenir) group-hover:text-white',
+              'mr-3 flex-shrink-0 h-6 w-6'
+            ]" aria-hidden="true" />
+          {{ item.name }}
+        </Link>
+      </nav>
+
+      <div class="border-t border-slate-800 p-4 bg-(--color-capavenir-brown) shrink-0">
+        <div class="flex items-center">
+            <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold text-white border border-slate-600">
+                {{ user?.name?.charAt(0) || 'U' }}
+            </div>
+            <div class="ml-3 overflow-hidden">
+                <p class="text-sm font-medium text-white truncate w-32">{{ user?.name || 'Utilisateur' }}</p>
+            </div>
+            <Link href="/logout" method="post" as="button" class="ml-auto text-slate-400 hover:text-white">
+                <ArrowRightOnRectangleIcon class="w-5 h-5" />
+            </Link>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex-1 flex flex-col min-h-screen transition-all duration-300 overflow-hidden">
+      <header class="sticky top-0 z-10 flex items-center justify-between h-16 px-4 bg-white shadow-sm lg:hidden border-b border-slate-200">
+        <button @click="showingNavigationDropdown = true" class="text-slate-500 hover:text-slate-700">
+          <Bars3Icon class="w-6 h-6" />
+        </button>
+        <span class="font-bold text-slate-700">SocialCare</span>
+        <div class="w-6"></div>
+      </header>
+
+      <main class="flex-1 py-8 px-4 sm:px-8 bg-slate-50 overflow-y-auto">
+        <slot />
+      </main>
+    </div>
+  </div>
+</template>

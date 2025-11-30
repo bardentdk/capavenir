@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+/* Configuration du thème (exemple pour UX médicale/moderne) */
+@theme {
+  --color-primary: #0ea5e9; /* Sky 500 - Apaisant et professionnel */
+  --color-primary-dark: #0284c7;
+  --color-secondary: #64748b; /* Slate 500 */
+  --color-capavenir: #b41667;
+  --color-capavenir-brown: #71013a;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-serif: "Playfair Display", serif;
+  --font-itc: "EdwardianScript";
+
+  /* Animations douces */
+  --animate-fade-in: fade-in 0.3s ease-in-out;
+}
+
+@font-face {
+  font-family: 'EdwardianScript';
+  src: url('/fonts/Edwardian Script ITC Std Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+/* Custom Utilities si besoin */
+@layer utilities {
+  .glass-panel {
+    @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-sm;
+  }
+}
