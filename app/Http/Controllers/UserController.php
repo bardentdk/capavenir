@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\WelcomeStaffMember;
 
 class UserController extends Controller
 {
@@ -83,6 +85,15 @@ class UserController extends Controller
         // Assignation du rôle (Package Spatie)
         $user->assignRole($request->role);
 
-        return redirect()->route('users.index')->with('success', 'Nouveau collaborateur créé avec succès.');
+        try {
+            Mail::to($user)->send(new WelcomeStaffMember($user, $request->password));
+        } catch (\Exception $e) {
+            // On ne fait pas planter la création si le mail échoue, mais on peut logger l'erreur
+            \Illuminate\Support\Facades\Log::error("Erreur envoi mail bienvenue : " . $e->getMessage());
+        }
+
+        return redirect()->route('users.index')->with('success', 'Compte créé et invitation envoyée par e-mail.');
+
+        // return redirect()->route('users.index')->with('success', 'Nouveau collaborateur créé avec succès.');
     }
 }
