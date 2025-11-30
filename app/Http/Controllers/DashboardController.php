@@ -85,7 +85,8 @@ class DashboardController extends Controller
         return Inertia::render('Dashboard', [
             'stats' => $stats,
             'shortcuts' => $shortcuts,
-            'role' => $user->getRoleNames()->first() ?? 'user'
+            'role' => $user->getRoleNames()->first() ?? 'user',
+            'user' => Auth::user(),
         ]);
     }
 }

@@ -16,6 +16,9 @@ return [
     'brevo' => [
         'key' => env('BREVO_KEY'),
     ],
+    'google' => [
+        'maps_key' => env('GOOGLE_MAPS_KEY'),
+    ],
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],

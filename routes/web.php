@@ -51,6 +51,8 @@ Route::middleware(['auth'])->group(function () {
 
     // Placeholders restants
     // Route::get('/expenses', function () { return Inertia::render('Dashboard'); });
+    Route::post('/expenses/calculate-distance', [\App\Http\Controllers\ExpenseController::class, 'calculateDistance'])
+        ->name('expenses.distance');
     Route::resource('expenses', \App\Http\Controllers\ExpenseController::class)->only(['index', 'create', 'store']);
     Route::get('/clients', function () { return Inertia::render('Dashboard'); });
     Route::resource('clients', ClientController::class);

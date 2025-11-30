@@ -130,4 +130,49 @@ class ExpenseController extends Controller
 
         return redirect()->route('expenses.index')->with('success', 'Note de frais enregistrée.');
     }
+
+    public function calculateDistance(Request $request)
+    {
+        $request->validate([
+            'start' => 'required|string|min:3',
+            'end' => 'required|string|min:3',
+        ]);
+
+        $apiKey = config('services.google.maps_key');
+
+        // Appel à l'API Google
+        $response = Http::get('https://maps.googleapis.com/maps/api/distancematrix/json', [
+            'origins' => $request->start,
+            'destinations' => $request->end,
+            'key' => $apiKey,
+            'language' => 'fr', // Pour avoir les erreurs en français si besoin
+            'units' => 'metric'
+        ]);
+
+        if ($response->failed()) {
+            return response()->json(['error' => 'Erreur de connexion Google'], 500);
+        }
+
+        $data = $response->json();
+
+        // Vérification de la réponse Google (Status global)
+        if ($data['status'] !== 'OK') {
+            return response()->json(['error' => 'Erreur API : ' . $data['status']], 400);
+        }
+
+        // Vérification du trajet spécifique (Status element)
+        $element = $data['rows'][0]['elements'][0];
+        if ($element['status'] !== 'OK') {
+             // ZERO_RESULTS = Pas de route trouvée (ex: océan entre les deux)
+            return response()->json(['distance' => 0, 'error' => 'Trajet introuvable']);
+        }
+
+        // Google renvoie des mètres, on convertit en KM (ex: 12500 -> 12.5)
+        $distanceKm = round($element['distance']['value'] / 1000, 2);
+
+        return response()->json([
+            'distance' => $distanceKm,
+            'text' => $element['distance']['text'] // "12.5 km"
+        ]);
+    }
 }
