@@ -1,25 +1,23 @@
 <script setup>
 import { useForm, Head } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref } from 'vue';
 import axios from 'axios';
-import { SparklesIcon, MicrophoneIcon, StopIcon } from '@heroicons/vue/24/solid'; // Ajout icônes
+import { SparklesIcon } from '@heroicons/vue/24/solid';
 import DatePicker from '@/Components/DatePicker.vue';
 
 const props = defineProps({
     clients: Array
 });
 
-// Variables locales UI
+// Variables locales pour l'UI (Date/Heure séparées)
 const dateDebut = ref('');
 const heureDebut = ref('');
 const dateFin = ref('');
 const heureFin = ref('');
 
-// État IA & Vocal
+// État IA
 const isGenerating = ref(false);
-const isRecording = ref(false);
-let recognition = null;
 
 const form = useForm({
     client_id: '',
@@ -31,78 +29,10 @@ const form = useForm({
     ai_report: '',
 });
 
-// --- GESTION VOCALE (Speech-to-Text) ---
-const toggleRecording = () => {
-    if (isRecording.value) {
-        stopRecording();
-    } else {
-        startRecording();
-    }
-};
-
-const startRecording = () => {
-    // Vérification compatibilité navigateur
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-        alert("Votre navigateur ne supporte pas la reconnaissance vocale. Essayez Chrome ou Edge.");
-        return;
-    }
-
-    recognition = new SpeechRecognition();
-    recognition.lang = 'fr-FR';
-    recognition.continuous = true; // Continue d'écouter même après une pause
-    recognition.interimResults = true; // Affiche le texte pendant qu'on parle
-
-    recognition.onstart = () => {
-        isRecording.value = true;
-    };
-
-    recognition.onresult = (event) => {
-        let transcript = '';
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-            transcript += event.results[i][0].transcript;
-        }
-        // On met à jour le champ en temps réel (ou on ajoute à l'existant)
-        // Ici je choisis d'ajouter à la suite si on fait plusieurs prises
-        // Note : Pour une UX fluide, on remplace souvent tout le flux courant
-        // Astuce : On concatène intelligemment
-    };
-
-    // Astuce UX : On capture le texte final à la fin de la phrase
-    recognition.onend = () => {
-        isRecording.value = false;
-    };
-
-    // Gestion intelligente de l'ajout de texte
-    let finalTranscript = form.raw_notes ? form.raw_notes + ' ' : '';
-
-    recognition.onresult = (event) => {
-        let interimTranscript = '';
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-            if (event.results[i].isFinal) {
-                finalTranscript += event.results[i][0].transcript + '. ';
-                form.raw_notes = finalTranscript;
-            } else {
-                interimTranscript += event.results[i][0].transcript;
-            }
-        }
-    };
-
-    recognition.start();
-};
-
-const stopRecording = () => {
-    if (recognition) {
-        recognition.stop();
-        isRecording.value = false;
-    }
-};
-// -----------------------------------------
-
 // Fonction IA
 const generateAiReport = async () => {
     if (!form.raw_notes || !form.client_id) {
-        alert("Veuillez sélectionner un bénéficiaire et saisir (ou dicter) quelques notes d'abord.");
+        alert("Veuillez sélectionner un bénéficiaire et saisir quelques notes d'abord.");
         return;
     }
     isGenerating.value = true;
@@ -123,15 +53,19 @@ const generateAiReport = async () => {
 
 // Soumission
 const submit = () => {
+    // Reconstitution des Datetime pour Laravel
     if(dateDebut.value && heureDebut.value) {
         form.start_at = `${dateDebut.value} ${heureDebut.value}:00`;
     }
     if(dateFin.value && heureFin.value) {
         form.end_at = `${dateFin.value} ${heureFin.value}:00`;
     }
+
+    // Auto-fill fin si vide
     if (!dateFin.value && dateDebut.value) {
          form.end_at = `${dateDebut.value} ${heureFin.value || '18:00'}:00`;
     }
+
     form.post('/interventions');
 };
 </script>
@@ -144,9 +78,7 @@ const submit = () => {
             <h1 class="text-xl font-bold text-slate-900 mb-6">Saisir une intervention</h1>
 
             <div class="bg-white shadow-sm ring-1 ring-slate-900/5 rounded-xl p-6 sm:p-8">
-                <form @submit.prevent="submit" class="space-y-8">
-
-                    <div>
+                <form @submit.prevent="submit" class="space-y-8"> <div>
                         <label class="block text-sm font-medium leading-6 text-slate-900">Bénéficiaire</label>
                         <select v-model="form.client_id" class="mt-2 block w-full rounded-md border-0 py-2.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-sky-600 sm:text-sm sm:leading-6">
                             <option value="" disabled>Choisir un enfant...</option>
@@ -165,16 +97,25 @@ const submit = () => {
                             <div>
                                 <label class="block text-sm font-medium leading-6 text-slate-900 mb-1">Début</label>
                                 <div class="flex gap-2">
-                                    <div class="flex-1"><DatePicker v-model="dateDebut" placeholder="Date" /></div>
-                                    <div class="w-28"><input type="time" v-model="heureDebut" class="block w-full rounded-md border-0 py-2.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-sky-600 sm:text-sm"></div>
+                                    <div class="flex-1">
+                                        <DatePicker v-model="dateDebut" placeholder="Date" />
+                                    </div>
+                                    <div class="w-28">
+                                        <input type="time" v-model="heureDebut" class="block w-full rounded-md border-0 py-2.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-sky-600 sm:text-sm">
+                                    </div>
                                 </div>
                                 <p v-if="form.errors.start_at" class="text-xs text-red-600 mt-1">{{ form.errors.start_at }}</p>
                             </div>
+
                             <div>
                                 <label class="block text-sm font-medium leading-6 text-slate-900 mb-1">Fin</label>
                                 <div class="flex gap-2">
-                                    <div class="flex-1"><DatePicker v-model="dateFin" :placeholder="dateDebut ? 'Même jour' : 'Date'" /></div>
-                                    <div class="w-28"><input type="time" v-model="heureFin" class="block w-full rounded-md border-0 py-2.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-sky-600 sm:text-sm"></div>
+                                    <div class="flex-1">
+                                        <DatePicker v-model="dateFin" :placeholder="dateDebut ? 'Même jour' : 'Date'" />
+                                    </div>
+                                    <div class="w-28">
+                                        <input type="time" v-model="heureFin" class="block w-full rounded-md border-0 py-2.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-sky-600 sm:text-sm">
+                                    </div>
                                 </div>
                                 <p v-if="form.errors.end_at" class="text-xs text-red-600 mt-1">{{ form.errors.end_at }}</p>
                             </div>
@@ -208,32 +149,12 @@ const submit = () => {
                     <div class="border-t border-slate-100 pt-6"></div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
                         <div>
                             <div class="flex justify-between items-center mb-2">
-                                <label class="block text-sm font-medium leading-6 text-slate-900">Notes & Dictée</label>
-
-                                <button type="button" @click="toggleRecording"
-                                    class="flex items-center gap-1 text-xs font-bold uppercase tracking-wide transition-all"
-                                    :class="isRecording ? 'text-red-600 animate-pulse' : 'text-slate-500 hover:text-slate-700'">
-
-                                    <span v-if="isRecording" class="flex h-2 w-2 rounded-full bg-red-600"></span>
-                                    <StopIcon v-if="isRecording" class="h-4 w-4" />
-                                    <MicrophoneIcon v-else class="h-4 w-4" />
-                                    {{ isRecording ? 'Arrêter la dictée' : 'Dicter mes notes' }}
-                                </button>
+                                <label class="block text-sm font-medium leading-6 text-slate-900">Notes Brutes</label>
+                                <span class="text-xs text-slate-400">Vos mots-clés</span>
                             </div>
-
-                            <div class="relative">
-                                <textarea v-model="form.raw_notes" rows="8"
-                                    placeholder="- Activité peinture&#10;- Enfant calme&#10;- Progrès sur la concentration"
-                                    class="block w-full rounded-md border-0 py-2 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-sky-600 sm:text-sm transition-colors"
-                                    :class="{'ring-red-300 bg-red-50': isRecording}"></textarea>
-
-                                <div v-if="isRecording" class="absolute bottom-2 right-2 text-[10px] text-red-500 font-bold bg-white/80 px-2 py-1 rounded-full border border-red-100 shadow-sm">
-                                    ENREGISTREMENT EN COURS...
-                                </div>
-                            </div>
+                            <textarea v-model="form.raw_notes" rows="8" placeholder="- Activité..." class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-sky-600 sm:text-sm"></textarea>
 
                             <div class="mt-3 text-right">
                                 <button type="button" @click="generateAiReport" :disabled="isGenerating || !form.raw_notes"
@@ -250,7 +171,7 @@ const submit = () => {
                             <div class="relative">
                                 <textarea v-model="form.ai_report" rows="12" class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-indigo-600 sm:text-sm bg-slate-50"></textarea>
                                 <div v-if="!form.ai_report && !isGenerating" class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                    <p class="text-sm text-slate-400 italic">Le rapport généré apparaîtra ici...</p>
+                                    <p class="text-sm text-slate-400 italic">Le rapport apparaîtra ici...</p>
                                 </div>
                             </div>
                         </div>
