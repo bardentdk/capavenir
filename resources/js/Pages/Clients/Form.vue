@@ -1,6 +1,7 @@
 <script setup>
 import { useForm, Head, Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import DatePicker from '@/Components/DatePicker.vue';
 
 const props = defineProps({
     client: Object // Optionnel (présent seulement en mode édition)
@@ -48,9 +49,16 @@ const submit = () => {
                         </div>
                     </div>
 
-                    <div>
+                    <!-- <div>
                         <label class="block text-sm font-medium text-slate-900">Date de naissance</label>
                         <input type="date" v-model="form.birth_date" class="px-3 py-3 mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm">
+                    </div> -->
+                    <div>
+                        <DatePicker
+                            label="Date de naissance"
+                            v-model="form.birth_date"
+                            placeholder="JJ MMMM AAAA"
+                        />
                     </div>
 
                     <div>

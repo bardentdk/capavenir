@@ -2,6 +2,7 @@
   import { useForm, Head } from '@inertiajs/vue3';
   import AppLayout from '@/Layouts/AppLayout.vue';
   import { ref } from 'vue';
+  import DatePicker from '@/Components/DatePicker.vue';
 
   const props = defineProps({ clients: Array });
 
@@ -63,11 +64,17 @@
             <div class="bg-white shadow-sm ring-1 ring-slate-900/5 rounded-xl p-6">
                 <form @submit.prevent="submit" class="space-y-6">
 
-                    <div>
+                    <!-- <div>
                         <label class="block text-sm font-medium text-slate-900">Date</label>
                         <input type="date" v-model="form.expense_date" class="px-3 py-3 mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm">
+                    </div> -->
+                    <div>
+                        <DatePicker
+                            label="Date du frais"
+                            v-model="form.expense_date"
+                            placeholder="Sélectionner la date"
+                        />
                     </div>
-
                     <div>
                         <label class="block text-sm font-medium text-slate-900">Bénéficiaire (Optionnel)</label>
                         <select v-model="form.client_id" class="px-3 py-3 mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm">

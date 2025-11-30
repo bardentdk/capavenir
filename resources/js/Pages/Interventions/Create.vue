@@ -4,10 +4,15 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import { ref } from 'vue'; // Import ref pour l'état local
 import axios from 'axios'; // Import axios pour l'appel API manuel
 import { SparklesIcon } from '@heroicons/vue/24/solid'; // Icône magique
+import DatePicker from '@/Components/DatePicker.vue';
 
 const props = defineProps({
     clients: Array
 });
+const dateDebut = ref('');
+const heureDebut = ref('');
+const dateFin = ref('');
+const heureFin = ref('');
 
 const form = useForm({
     client_id: '',
@@ -48,6 +53,18 @@ const generateAiReport = async () => {
 };
 
 const submit = () => {
+    if(dateDebut.value && heureDebut.value) {
+        form.start_at = `${dateDebut.value} ${heureDebut.value}:00`;
+    }
+    if(dateFin.value && heureFin.value) {
+        form.end_at = `${dateFin.value} ${heureFin.value}:00`;
+    }
+
+    // Petit fallback ergonomique : si l'utilisateur met la même date de fin, on pré-remplit pour lui éviter de cliquer 2 fois
+    if (!dateFin.value && dateDebut.value) {
+         form.end_at = `${dateDebut.value} ${heureFin.value || '18:00'}:00`;
+    }
+
     form.post('/interventions');
 };
 </script>
@@ -71,14 +88,35 @@ const submit = () => {
                         </select>
                     </div>
 
-                    <div class="grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-2">
-                        <div>
-                            <label class="block text-sm font-medium leading-6 text-slate-900">Début</label>
-                            <input type="datetime-local" v-model="form.start_at" class="px-3 mt-2 block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-sky-600 sm:text-sm sm:leading-6">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium leading-6 text-slate-900">Fin</label>
-                            <input type="datetime-local" v-model="form.end_at" class="px-3 mt-2 block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-sky-600 sm:text-sm sm:leading-6">
+                        <div class="grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-2">
+                            <div class="grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-2">
+
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium leading-6 text-slate-900">Début de séance</label>
+                                <div class="flex gap-2">
+                                    <div class="flex-1">
+                                        <DatePicker v-model="dateDebut" placeholder="Date" />
+                                    </div>
+                                    <div class="w-24">
+                                        <input type="time" v-model="heureDebut" class="block w-full rounded-md border-0 py-2.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-sky-600 sm:text-sm sm:leading-6">
+                                    </div>
+                                </div>
+                                <p v-if="form.errors.start_at" class="text-xs text-red-600">{{ form.errors.start_at }}</p>
+                            </div>
+
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium leading-6 text-slate-900">Fin de séance</label>
+                                <div class="flex gap-2">
+                                    <div class="flex-1">
+                                        <DatePicker v-model="dateFin" :placeholder="dateDebut ? 'Même jour' : 'Date'" />
+                                    </div>
+                                    <div class="w-24">
+                                        <input type="time" v-model="heureFin" class="block w-full rounded-md border-0 py-2.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-sky-600 sm:text-sm sm:leading-6">
+                                    </div>
+                                </div>
+                                <p v-if="form.errors.end_at" class="text-xs text-red-600">{{ form.errors.end_at }}</p>
+                            </div>
+
                         </div>
                         <div>
                             <label class="block text-sm font-medium leading-6 text-slate-900">Type</label>
