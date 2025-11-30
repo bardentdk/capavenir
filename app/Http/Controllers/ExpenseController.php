@@ -8,6 +8,7 @@ use App\Models\Expense;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 
 class ExpenseController extends Controller
@@ -140,39 +141,49 @@ class ExpenseController extends Controller
 
         $apiKey = config('services.google.maps_key');
 
-        // Appel à l'API Google
-        $response = Http::get('https://maps.googleapis.com/maps/api/distancematrix/json', [
-            'origins' => $request->start,
-            'destinations' => $request->end,
+        // Astuce : On force le contexte "La Réunion" si l'utilisateur ne l'a pas mis (ex: juste "Saint-Denis")
+        // Cela évite que Google calcule un trajet vers Saint-Denis près de Paris (93)
+        $start = $request->start;
+        $end = $request->end;
+
+        if (!str_contains(strtolower($start), '974') && !str_contains(strtolower($start), 'reunion')) {
+            $start .= ', La Réunion';
+        }
+        if (!str_contains(strtolower($end), '974') && !str_contains(strtolower($end), 'reunion')) {
+            $end .= ', La Réunion';
+        }
+
+        $response = \Illuminate\Support\Facades\Http::get('https://maps.googleapis.com/maps/api/distancematrix/json', [
+            'origins' => $start,
+            'destinations' => $end,
             'key' => $apiKey,
-            'language' => 'fr', // Pour avoir les erreurs en français si besoin
+            'language' => 'fr',
             'units' => 'metric'
         ]);
 
         if ($response->failed()) {
-            return response()->json(['error' => 'Erreur de connexion Google'], 500);
+            return response()->json(['error' => 'Erreur de connexion aux services Google'], 500);
         }
 
         $data = $response->json();
 
-        // Vérification de la réponse Google (Status global)
+        // Si Google refuse (Billing pas activé, mauvaise clé...)
         if ($data['status'] !== 'OK') {
-            return response()->json(['error' => 'Erreur API : ' . $data['status']], 400);
+            \Illuminate\Support\Facades\Log::error('Google Maps Error: ' . ($data['error_message'] ?? $data['status']));
+            return response()->json(['error' => 'Service de calcul indisponible (Config API)'], 400);
         }
 
-        // Vérification du trajet spécifique (Status element)
+        // Si le trajet est impossible (ex: adresse inconnue)
         $element = $data['rows'][0]['elements'][0];
         if ($element['status'] !== 'OK') {
-             // ZERO_RESULTS = Pas de route trouvée (ex: océan entre les deux)
-            return response()->json(['distance' => 0, 'error' => 'Trajet introuvable']);
+            return response()->json(['distance' => 0]); // On retourne 0 pour laisser l'user saisir manuellement
         }
 
-        // Google renvoie des mètres, on convertit en KM (ex: 12500 -> 12.5)
+        // Conversion Mètres -> Kilomètres
         $distanceKm = round($element['distance']['value'] / 1000, 2);
 
         return response()->json([
-            'distance' => $distanceKm,
-            'text' => $element['distance']['text'] // "12.5 km"
+            'distance' => $distanceKm
         ]);
     }
 }

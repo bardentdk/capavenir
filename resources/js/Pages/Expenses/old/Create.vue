@@ -1,78 +1,41 @@
 <script setup>
-import { useForm, Head } from '@inertiajs/vue3';
-import AppLayout from '@/Layouts/AppLayout.vue';
-import { ref, watch } from 'vue';
-import axios from 'axios';
-import { debounce } from 'lodash';
-import DatePicker from '@/Components/DatePicker.vue';
-import { ArrowPathIcon } from '@heroicons/vue/24/outline'; // Icône pour le chargement
+  import { useForm, Head } from '@inertiajs/vue3';
+  import AppLayout from '@/Layouts/AppLayout.vue';
+  import { ref, watch } from 'vue';
+  import axios from 'axios';
+  import { debounce } from 'lodash';
+  import DatePicker from '@/Components/DatePicker.vue';
 
-const props = defineProps({ clients: Array });
+  const props = defineProps({ clients: Array });
 
-const currentTab = ref('mileage');
-const isCalculating = ref(false);
+  // Type de frais sélectionné (mileage ou purchase)
+  const currentTab = ref('mileage');
 
-// 1. DÉFINITION DU FORMULAIRE (Doit être avant fetchDistance)
-const form = useForm({
-    type: 'mileage',
-    expense_date: new Date().toISOString().split('T')[0],
-    client_id: '',
+  const form = useForm({
+      type: 'mileage',
+      expense_date: new Date().toISOString().split('T')[0], // Date aujourd'hui par défaut
+      client_id: '',
 
-    // Champs Kilomètres
-    start_address: '',
-    end_address: '',
-    distance_km: '',
+      // Champs Kilomètres
+      start_address: '',
+      end_address: '',
+      distance_km: '',
 
-    // Champs Achat
-    amount: '',
-    proof: null,
-});
+      // Champs Achat
+      amount: '',
+      proof: null, // Fichier
+  });
 
-// 2. FONCTION DE CALCUL (Debounce pour ne pas spammer l'API)
-const fetchDistance = debounce(async () => {
-    // On ne lance le calcul que si les deux adresses sont suffisamment remplies
-    if (form.start_address.length > 3 && form.end_address.length > 3) {
+  const submit = () => {
+      form.type = currentTab.value;
+      form.post('/expenses', {
+          forceFormData: true, // IMPORTANT pour l'upload de fichier
+      });
+  };
 
-        isCalculating.value = true;
-
-        try {
-            // Appel à notre route Laravel (qui appelle Google)
-            const response = await axios.post('/expenses/calculate-distance', {
-                start: form.start_address,
-                end: form.end_address
-            });
-
-            if (response.data.distance) {
-                form.distance_km = response.data.distance;
-            } else {
-                console.warn('Trajet non trouvé par Google API');
-            }
-        } catch (error) {
-            console.error("Erreur calcul distance", error);
-        } finally {
-            isCalculating.value = false;
-        }
-    }
-}, 1000); // Délai d'1 seconde après la frappe
-
-// 3. WATCHER : On surveille les champs adresses
-watch(
-    [() => form.start_address, () => form.end_address],
-    () => {
-        fetchDistance();
-    }
-);
-
-const submit = () => {
-    form.type = currentTab.value;
-    form.post('/expenses', {
-        forceFormData: true, // Crucial pour l'upload de fichiers
-    });
-};
-
-const handleFile = (e) => {
-    form.proof = e.target.files[0];
-};
+  const handleFile = (e) => {
+      form.proof = e.target.files[0];
+  };
 </script>
 
 <template>
@@ -103,6 +66,10 @@ const handleFile = (e) => {
             <div class="bg-white shadow-sm ring-1 ring-slate-900/5 rounded-xl p-6">
                 <form @submit.prevent="submit" class="space-y-6">
 
+                    <!-- <div>
+                        <label class="block text-sm font-medium text-slate-900">Date</label>
+                        <input type="date" v-model="form.expense_date" class="px-3 py-3 mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm">
+                    </div> -->
                     <div>
                         <DatePicker
                             label="Date du frais"
@@ -110,7 +77,6 @@ const handleFile = (e) => {
                             placeholder="Sélectionner la date"
                         />
                     </div>
-
                     <div>
                         <label class="block text-sm font-medium text-slate-900">Bénéficiaire (Optionnel)</label>
                         <select v-model="form.client_id" class="px-3 py-3 mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm">
@@ -136,22 +102,12 @@ const handleFile = (e) => {
                         <div>
                             <label class="block text-sm font-medium text-slate-900">Distance (km)</label>
                             <div class="relative mt-1 rounded-md shadow-sm">
-                                <input
-                                    type="number"
-                                    step="0.01"
-                                    v-model="form.distance_km"
-                                    class="px-3 py-3 block w-full rounded-md border-slate-300 pr-12 focus:border-sky-500 focus:ring-sky-500 sm:text-sm transition-colors"
-                                    :class="{'bg-slate-50 text-slate-500': isCalculating}"
-                                    placeholder="0.00"
-                                >
+                                <input type="number" step="0.1" v-model="form.distance_km" class="px-3 py-3 block w-full rounded-md border-slate-300 pr-12 focus:border-sky-500 focus:ring-sky-500 sm:text-sm" placeholder="0.0">
                                 <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                                    <span v-if="!isCalculating" class="text-slate-500 sm:text-sm">km</span>
-                                    <ArrowPathIcon v-else class="h-5 w-5 text-sky-600 animate-spin" />
+                                    <span class="text-slate-500 sm:text-sm">km</span>
                                 </div>
                             </div>
-
-                            <p v-if="isCalculating" class="text-xs text-sky-600 mt-1 animate-pulse">Calcul de l'itinéraire...</p>
-                            <p v-if="form.errors.distance_km" class="text-red-500 text-xs mt-1">{{ form.errors.distance_km }}</p>
+                             <p v-if="form.errors.distance_km" class="text-red-500 text-xs mt-1">{{ form.errors.distance_km }}</p>
                         </div>
 
                         <div class="bg-blue-50 p-3 rounded-md text-sm text-blue-700">
@@ -168,19 +124,19 @@ const handleFile = (e) => {
                                 </div>
                                 <input type="number" step="0.01" v-model="form.amount" class="px-3 py-3 block w-full rounded-md border-slate-300 pl-7 pr-12 focus:border-sky-500 focus:ring-sky-500 sm:text-sm" placeholder="0.00">
                             </div>
-                            <p v-if="form.errors.amount" class="text-red-500 text-xs mt-1">{{ form.errors.amount }}</p>
+                             <p v-if="form.errors.amount" class="text-red-500 text-xs mt-1">{{ form.errors.amount }}</p>
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-slate-900">Justificatif (Photo/PDF)</label>
-                            <input type="file" @change="handleFile" class="px-3 py-3 mt-2 block w-full text-sm text-slate-500
+                            <input type="file" @change="handleFile" class="px-3 py-3  mt-2 block w-full text-sm text-slate-500
                                 file:mr-4 file:py-2 file:px-4
                                 file:rounded-full file:border-0
                                 file:text-sm file:font-semibold
                                 file:bg-sky-50 file:text-sky-700
                                 hover:file:bg-sky-100
                             "/>
-                            <p v-if="form.errors.proof" class="text-red-500 text-xs mt-1">{{ form.errors.proof }}</p>
+                             <p v-if="form.errors.proof" class="text-red-500 text-xs mt-1">{{ form.errors.proof }}</p>
                         </div>
                     </div>
 
