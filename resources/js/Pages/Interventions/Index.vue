@@ -18,7 +18,7 @@ defineProps({
                 <p class="mt-1 text-sm text-slate-500">Gérez votre planning et vos comptes rendus.</p>
             </div>
             <div class="mt-4 sm:mt-0">
-                <Link href="/interventions/create" class="inline-flex items-center justify-center rounded-md bg-(--color-capavenir) px-4 py-2 text-sm transition duration-300 font-semibold text-white shadow-sm hover:bg-(--color-capavenir-brown) focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600">
+                <Link href="/interventions/create" class="inline-flex items-center justify-center rounded-md bg-(--color-capavenir) px-4 py-2 text-sm transition duration-300 font-semibold text-white shadow-sm hover:bg-(--color-capavenir-dark) focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600">
                     <PlusIcon class="-ml-0.5 mr-1.5 h-5 w-5" aria-hidden="true" />
                     Nouvelle Saisie
                 </Link>

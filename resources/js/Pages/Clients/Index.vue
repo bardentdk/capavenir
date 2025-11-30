@@ -63,7 +63,9 @@ const deleteClient = (client) => {
                 <tbody class="bg-white divide-y divide-slate-200">
                     <tr v-for="client in clients.data" :key="client.id">
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm font-medium text-slate-900">{{ client.name }}</div>
+                            <Link :href="`/clients/${client.id}`" class="text-sm font-medium text-slate-900 hover:text-(--color-capavenir) transition-colors font-bold">
+                                {{ client.name }}
+                            </Link>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{{ client.age }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 max-w-xs truncate">{{ client.address }}</td>

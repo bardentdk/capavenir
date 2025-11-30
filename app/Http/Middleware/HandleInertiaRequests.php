@@ -48,6 +48,9 @@ class HandleInertiaRequests extends Middleware
                         ? \Illuminate\Support\Facades\Storage::url($request->user()->avatar_path)
                         : null,
                 ] : null,
+                'notifications' => $request->user()
+                    ? $request->user()->unreadNotifications()->latest()->take(5)->get()
+                    : [],
             ],
             // On partage les messages flash (succès, erreur)
             'flash' => [

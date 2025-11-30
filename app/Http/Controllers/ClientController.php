@@ -95,7 +95,15 @@ class ClientController extends Controller
 
         return redirect()->route('clients.index')->with('success', 'Dossier mis à jour.');
     }
-
+    public function show(Client $client)
+    {
+        // On charge le client AVEC ses documents triés par date
+        return Inertia::render('Clients/Show', [
+            'client' => $client->load(['documents' => function ($q) {
+                $q->latest();
+            }]),
+        ]);
+    }
     /**
      * Suppression (Soft delete ou définitive, ici définitive pour simplifier).
      */

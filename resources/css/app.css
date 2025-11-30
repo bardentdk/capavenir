@@ -2,11 +2,11 @@
 
 /* Configuration du thème (exemple pour UX médicale/moderne) */
 @theme {
-  --color-primary: #0ea5e9; /* Sky 500 - Apaisant et professionnel */
+  --color-primary: #0ea5e9;
   --color-primary-dark: #0284c7;
   --color-secondary: #64748b; /* Slate 500 */
   --color-capavenir: #b41667;
-  --color-capavenir-brown: #71013a;
+  --color-capavenir-dark: #71013a;
   --font-sans: "Inter", system-ui, sans-serif;
   --font-serif: "Playfair Display", serif;
   --font-itc: "EdwardianScript";
@@ -14,7 +14,7 @@
   /* Animations douces */
   --animate-fade-in: fade-in 0.3s ease-in-out;
 }
-
+@custom-variant dark (&:where(.dark, .dark *));
 @font-face {
   font-family: 'EdwardianScript';
   src: url('/fonts/Edwardian Script ITC Std Bold.otf') format('opentype');

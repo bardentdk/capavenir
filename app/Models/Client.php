@@ -36,4 +36,9 @@ class Client extends Model
     {
         return $this->hasMany(Intervention::class);
     }
+
+    public function documents(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Document::class);
+    }
 }

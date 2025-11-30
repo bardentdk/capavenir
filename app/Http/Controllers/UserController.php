@@ -3,14 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Http\Request;
+use App\Mail\WelcomeStaffMember;
 use Illuminate\Validation\Rules;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
-use App\Mail\WelcomeStaffMember;
+use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
@@ -31,6 +32,7 @@ class UserController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
+                'avatar_path' => $user->avatar_path ? Storage::url($user->avatar_path) : null,
                 // On récupère le premier rôle (ex: "educator") et on le traduit pour l'affichage
                 'role' => $user->roles->first() ? $user->roles->first()->name : 'Aucun',
                 'created_at' => $user->created_at->format('d/m/Y'),

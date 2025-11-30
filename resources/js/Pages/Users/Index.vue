@@ -55,8 +55,14 @@ const formatRole = (role) => {
                     <tr v-for="user in users.data" :key="user.id">
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
-                                <div class="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-600">
+                                <!-- <div class="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-600">
                                     {{ user.name.charAt(0) }}
+                                </div> -->
+                                <div v-if="user?.avatar_path" class="w-10 h-10 rounded-full bg-cover bg-center border-2 border-white shadow-sm"
+                                    :style="'background-image: url(\'' + user.avatar_path + '\');'">
+                                </div>
+                                <div v-else class="w-10 h-10 rounded-full bg-gradient-to-br from-(--color-capavenir) to-slate-400 flex items-center justify-center text-xs font-bold text-white border-2 border-white shadow-sm">
+                                    {{ user?.name?.charAt(0) || 'U' }}
                                 </div>
                                 <div class="ml-3 font-medium text-slate-900">{{ user.name }}</div>
                             </div>

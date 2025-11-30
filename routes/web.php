@@ -52,6 +52,18 @@ Route::middleware(['auth'])->group(function () {
     // Gestion des plannings
     Route::resource('planning', \App\Http\Controllers\PlanningController::class);
 
+    // GESTION DOCUMENTAIRE (GED)
+    // Pour uploader un fichier depuis la fiche bénéficiaire
+    Route::post('/documents', [\App\Http\Controllers\DocumentController::class, 'store'])->name('documents.store');
+    Route::delete('/documents/{document}', [\App\Http\Controllers\DocumentController::class, 'destroy'])->name('documents.destroy');
+
+    // NOTIFICATIONS (La petite cloche)
+    // Pour marquer toutes les notifs comme "lues" quand on clique dessus
+    Route::post('/notifications/mark-as-read', function () {
+        auth()->user()->unreadNotifications->markAsRead();
+        return back();
+    })->name('notifications.markRead');
+
     // Placeholders restants
     // Route::get('/expenses', function () { return Inertia::render('Dashboard'); });
     Route::post('/expenses/calculate-distance', [\App\Http\Controllers\ExpenseController::class, 'calculateDistance'])
