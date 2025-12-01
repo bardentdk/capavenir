@@ -24,16 +24,6 @@ class AiReportGenerator
                    "**Conclusion :** À poursuivre.";
         }
 
-        // --- RÉCUPÉRATION CONFIGURATION ---
-        // On utilise config() et non env() pour la compatibilité production
-        $apiKey = config('services.groq.key');
-        $model = config('services.groq.model', 'llama-3.3-70b-versatile');
-
-        // Sécurité : On vérifie si la clé est bien chargée
-        if (empty($apiKey)) {
-            return "Erreur Configuration : La clé API Groq est vide. Pensez à vider le cache (php artisan config:clear) et vérifier config/services.php.";
-        }
-
         // --- PROMPT SYSTÈME (Le cerveau de l'expert) ---
         $systemPrompt = <<<EOT
 Tu es un expert en éducation spécialisée et travail social avec 15 ans d'expérience.
@@ -58,10 +48,10 @@ EOT;
 
         try {
             // Appel API GROQ
-            $response = Http::withToken($apiKey)
+            $response = Http::withToken(config('services.groq.key', env('GROQ_API_KEY')))
                 ->timeout(30) // Groq est rapide, 30s suffit largement
                 ->post('https://api.groq.com/openai/v1/chat/completions', [
-                    'model' => $model,
+                    'model' => env('GROQ_MODEL', 'llama-3.3-70b-versatile'),
                     'messages' => [
                         ['role' => 'system', 'content' => $systemPrompt],
                         ['role' => 'user', 'content' => $userPrompt]

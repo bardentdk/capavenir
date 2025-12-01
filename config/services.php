@@ -19,6 +19,10 @@ return [
     'google' => [
         'maps_key' => env('GOOGLE_MAPS_KEY'),
     ],
+    'groq' => [
+        'key' => env('GROQ_API_KEY'),
+        'model' => env('GROQ_MODEL', 'llama-3.3-70b-versatile'),
+    ],
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],

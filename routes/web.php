@@ -6,6 +6,11 @@ use App\Http\Controllers\ClientController;
 use App\Http\Controllers\AccountingController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\InterventionController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PlanningController;
+use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\ExpenseController;
 
 // Redirection racine
 Route::get('/', function () {
@@ -22,25 +27,28 @@ Route::post('logout', [LoginController::class, 'destroy'])
     ->middleware('auth')
     ->name('logout');
 
-
-Route::resource('users', \App\Http\Controllers\UserController::class)->only(['index', 'create', 'store']);
-// SECTION COMPTABILITÉ
-Route::prefix('accounting')->middleware(['auth'])->group(function () {
-    Route::get('/', [AccountingController::class, 'index'])->name('accounting.index');
-    Route::patch('/expenses/{expense}/approve', [AccountingController::class, 'approveExpense'])->name('accounting.approve');
-    Route::patch('/expenses/{expense}/reject', [AccountingController::class, 'rejectExpense'])->name('accounting.reject');
-});
 // --- APP PROTÉGÉE ---
 Route::middleware(['auth'])->group(function () {
 
     Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
 
-    // PROFIL UTILISATEUR
-    Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
-    Route::post('/profile', [\App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update'); // POST pour gérer l'upload fichier plus facilement
-    Route::put('/profile/password', [\App\Http\Controllers\ProfileController::class, 'updatePassword'])->name('profile.password');
+    // GESTION UTILISATEURS (Déplacé ici pour la sécurité + Full CRUD)
+    // On enlève "->only" pour avoir accès à edit/update/destroy
+    Route::resource('users', UserController::class);
 
-    // ROUTES INTERVENTIONS (CRUD)
+    // SECTION COMPTABILITÉ
+    Route::prefix('accounting')->group(function () {
+        Route::get('/', [AccountingController::class, 'index'])->name('accounting.index');
+        Route::patch('/expenses/{expense}/approve', [AccountingController::class, 'approveExpense'])->name('accounting.approve');
+        Route::patch('/expenses/{expense}/reject', [AccountingController::class, 'rejectExpense'])->name('accounting.reject');
+    });
+
+    // PROFIL UTILISATEUR
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+
+    // ROUTES INTERVENTIONS
     Route::get('/interventions', [InterventionController::class, 'index'])->name('interventions.index');
     Route::get('/interventions/create', [InterventionController::class, 'create'])->name('interventions.create');
     Route::post('/interventions', [InterventionController::class, 'store'])->name('interventions.store');
@@ -49,26 +57,23 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/interventions/{intervention}/validate', [InterventionController::class, 'validateIntervention'])->name('interventions.validate');
     Route::get('/interventions/{intervention}/pdf', [InterventionController::class, 'downloadPdf'])->name('interventions.pdf');
 
-    // Gestion des plannings
-    Route::resource('planning', \App\Http\Controllers\PlanningController::class);
+    // GESTION DES PLANNINGS
+    Route::resource('planning', PlanningController::class);
 
     // GESTION DOCUMENTAIRE (GED)
-    // Pour uploader un fichier depuis la fiche bénéficiaire
-    Route::post('/documents', [\App\Http\Controllers\DocumentController::class, 'store'])->name('documents.store');
-    Route::delete('/documents/{document}', [\App\Http\Controllers\DocumentController::class, 'destroy'])->name('documents.destroy');
+    Route::post('/documents', [DocumentController::class, 'store'])->name('documents.store');
+    Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
 
-    // NOTIFICATIONS (La petite cloche)
-    // Pour marquer toutes les notifs comme "lues" quand on clique dessus
+    // NOTIFICATIONS
     Route::post('/notifications/mark-as-read', function () {
         auth()->user()->unreadNotifications->markAsRead();
         return back();
     })->name('notifications.markRead');
 
-    // Placeholders restants
-    // Route::get('/expenses', function () { return Inertia::render('Dashboard'); });
-    Route::post('/expenses/calculate-distance', [\App\Http\Controllers\ExpenseController::class, 'calculateDistance'])
-        ->name('expenses.distance');
-    Route::resource('expenses', \App\Http\Controllers\ExpenseController::class)->only(['index', 'create', 'store']);
-    Route::get('/clients', function () { return Inertia::render('Dashboard'); });
+    // GESTION DES FRAIS
+    Route::post('/expenses/calculate-distance', [ExpenseController::class, 'calculateDistance'])->name('expenses.distance');
+    Route::resource('expenses', ExpenseController::class)->only(['index', 'create', 'store']);
+
+    // GESTION BÉNÉFICIAIRES
     Route::resource('clients', ClientController::class);
 });
