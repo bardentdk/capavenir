@@ -4,16 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany; // <--- C'est cet import qui manquait !
 
 class Planning extends Model
 {
     /**
      * Les attributs qui peuvent être assignés en masse.
-     * C'est cette liste qui corrige ton erreur "MassAssignmentException".
      */
     protected $fillable = [
-        'user_id',      // L'éducateur concerné
-        'creator_id',   // Qui a créé l'event (la compta)
+        'creator_id',   // Qui a créé l'event
+        // 'user_id',   // On ne l'utilise plus directement car on est en ManyToMany, mais on peut le garder pour historique
         'title',
         'start_at',
         'end_at',
@@ -23,7 +23,6 @@ class Planning extends Model
 
     /**
      * Les attributs qui doivent être convertis en objets Date (Carbon).
-     * Indispensable pour que FullCalendar reçoive le bon format JSON.
      */
     protected $casts = [
         'start_at' => 'datetime',
@@ -33,11 +32,11 @@ class Planning extends Model
     // --- RELATIONS ---
 
     /**
-     * L'éducateur à qui appartient ce créneau.
+     * Les participants à cet événement (Relation Many-to-Many).
      */
-    public function user(): BelongsTo
+    public function users(): BelongsToMany
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsToMany(User::class, 'planning_user');
     }
 
     /**

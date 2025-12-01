@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, reactive } from 'vue';
+import { ref, watch, reactive, onMounted } from 'vue';
 import { Head, useForm, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import FullCalendar from '@fullcalendar/vue3';
@@ -9,6 +9,7 @@ import interactionPlugin from '@fullcalendar/interaction';
 import frLocale from '@fullcalendar/core/locales/fr';
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import DatePicker from '@/Components/DatePicker.vue';
+import { PlusIcon } from '@heroicons/vue/24/outline';
 
 const props = defineProps({
     events: Array,
@@ -23,7 +24,10 @@ const timeStart = ref('');
 const dateEnd = ref('');
 const timeEnd = ref('');
 
-// --- GESTION CALENDRIER (REACTIF) ---
+// --- GESTION CALENDRIER (AMÉLIORÉE) ---
+// On utilise une REF pour les events, FullCalendar adore ça.
+const currentEvents = ref(props.events);
+
 const calendarOptions = reactive({
     plugins: [ dayGridPlugin, timeGridPlugin, interactionPlugin ],
     initialView: 'timeGridWeek',
@@ -37,9 +41,10 @@ const calendarOptions = reactive({
     slotMaxTime: "20:00:00",
     allDaySlot: false,
     height: 'auto',
-    events: props.events,
+    events: currentEvents, // <--- ON LIE LA REF ICI
     nowIndicator: true,
     selectable: props.canEdit,
+    longPressDelay: 500,
 
     select: (info) => {
         if (!props.canEdit) return;
@@ -49,16 +54,24 @@ const calendarOptions = reactive({
     eventClick: (info) => {
         if (!props.canEdit) return;
         if(confirm(`Supprimer "${info.event.title}" ?`)) {
-            router.delete(`/planning/${info.event.id}`);
+            router.delete(`/planning/${info.event.id}`, {
+                preserveScroll: true, // Garde la position
+                onSuccess: () => {
+                    // Inertia va recharger les props, le watcher va faire le reste
+                }
+            });
         }
     }
 });
 
+// --- WATCHER PUISSANT ---
+// Dès que Inertia met à jour props.events (après un post/delete réussi),
+// on met à jour notre ref locale. FullCalendar détectera ce changement de ref.
 watch(() => props.events, (newEvents) => {
-    calendarOptions.events = newEvents;
-});
+    currentEvents.value = newEvents;
+}, { deep: true });
 
-// --- FILTRE VUE GLOBALE ---
+// --- FILTRE EDUCATEUR ---
 const selectedUser = ref(props.selectedUserId);
 watch(selectedUser, (newVal) => {
     router.get('/planning', { user_id: newVal }, { preserveState: true, preserveScroll: true });
@@ -67,14 +80,17 @@ watch(selectedUser, (newVal) => {
 // --- MODAL & FORMULAIRE ---
 const isOpen = ref(false);
 const form = useForm({
-    user_id: props.selectedUserId, // Sera mis à jour à l'ouverture
+    user_id: props.selectedUserId,
     title: '',
     start_at: '',
     end_at: '',
     type: 'intervention',
-    description: ''
+    description: '',
+    recurrence: 'none',
+    recurrence_end: ''
 });
 
+// ... (Le reste : openModal, createEventNow, closeModal... reste inchangé) ...
 const openModal = (startStr, endStr) => {
     const startDateObj = new Date(startStr);
     const endDateObj = new Date(endStr);
@@ -84,11 +100,23 @@ const openModal = (startStr, endStr) => {
     timeStart.value = startDateObj.toTimeString().slice(0, 5);
     timeEnd.value = endDateObj.toTimeString().slice(0, 5);
 
-    // FIX : On pré-remplit avec l'utilisateur qu'on est en train de regarder (le filtre actuel)
-    // Mais on pourra le changer dans la modale
     form.user_id = selectedUser.value;
-
     isOpen.value = true;
+};
+
+const createEventNow = () => {
+    const now = new Date();
+    now.setMinutes(0, 0, 0);
+    now.setHours(now.getHours() + 1);
+
+    const end = new Date(now);
+    end.setHours(end.getHours() + 1);
+
+    const offset = now.getTimezoneOffset() * 60000;
+    const localStart = new Date(now.getTime() - offset).toISOString().slice(0, -1);
+    const localEnd = new Date(end.getTime() - offset).toISOString().slice(0, -1);
+
+    openModal(localStart, localEnd);
 };
 
 const closeModal = () => {
@@ -107,10 +135,10 @@ const submitEvent = () => {
     }
 
     form.post('/planning', {
+        preserveScroll: true, // Important pour ne pas sauter en haut de page
         onSuccess: () => {
             closeModal();
-            // Astuce : Si on a créé un event pour quelqu'un d'autre que la vue actuelle,
-            // on pourrait vouloir switcher la vue, mais restons simple pour l'instant.
+            // Grâce à Inertia et au watcher, currentEvents.value sera mis à jour automatiquement
         },
     });
 };
@@ -120,6 +148,7 @@ const submitEvent = () => {
     <Head title="Planning Équipe" />
     <AppLayout>
 
+        <!-- HEADER -->
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
             <div>
                 <h1 class="text-2xl font-bold text-slate-900">Agenda</h1>
@@ -134,10 +163,23 @@ const submitEvent = () => {
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-lg border border-slate-100 p-6 overflow-hidden calendar-wrapper">
+        <!-- CALENDRIER -->
+        <div class="bg-white rounded-2xl shadow-lg border border-slate-100 p-6 overflow-hidden calendar-wrapper mb-20 sm:mb-0">
             <FullCalendar :options="calendarOptions" />
         </div>
 
+        <!-- FAB (FLOATING ACTION BUTTON) POUR MOBILE -->
+        <!-- Ce bouton s'affiche toujours en bas à droite, par-dessus tout -->
+        <button
+            v-if="canEdit"
+            @click="createEventNow"
+            class="fixed bottom-8 right-8 z-40 p-4 bg-(--color-capavenir) text-white rounded-full shadow-xl shadow-pink-900/30 hover:scale-110 active:scale-95 transition-all focus:outline-none focus:ring-4 focus:ring-pink-300"
+            title="Ajouter un événement"
+        >
+            <PlusIcon class="h-8 w-8" />
+        </button>
+
+        <!-- MODAL AJOUT -->
         <TransitionRoot appear :show="isOpen" as="template">
             <Dialog as="div" @close="closeModal" class="relative z-50">
                 <TransitionChild as="template" enter="duration-300 ease-out" enter-from="opacity-0" enter-to="opacity-100" leave="duration-200 ease-in" leave-from="opacity-100" leave-to="opacity-0">
@@ -147,7 +189,7 @@ const submitEvent = () => {
                 <div class="fixed inset-0 overflow-y-auto">
                     <div class="flex min-h-full items-center justify-center p-4 text-center">
                         <TransitionChild as="template" enter="duration-300 ease-out" enter-from="opacity-0 scale-95" enter-to="opacity-100 scale-100" leave="duration-200 ease-in" leave-from="opacity-100 scale-100" leave-to="opacity-0 scale-95">
-                            <DialogPanel class="w-full max-w-lg transform overflow-hidden rounded-2xl bg-white p-8 text-left align-middle shadow-2xl transition-all border border-slate-100">
+                            <DialogPanel class="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white p-8 text-left align-middle shadow-2xl transition-all border border-slate-100">
 
                                 <DialogTitle as="h3" class="text-xl font-bold leading-6 text-slate-900 mb-6 flex items-center gap-2">
                                     <span class="w-2 h-6 bg-sky-500 rounded-full"></span>
@@ -156,6 +198,7 @@ const submitEvent = () => {
 
                                 <form @submit.prevent="submitEvent" class="space-y-6">
 
+                                    <!-- Pour QUI ? -->
                                     <div v-if="canEdit && users.length > 0" class="bg-slate-50 p-3 rounded-lg border border-slate-100">
                                         <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Pour qui ?</label>
                                         <select v-model="form.user_id" class="block w-full rounded-md border-0 py-2 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-sky-600 sm:text-sm bg-white">
@@ -165,12 +208,14 @@ const submitEvent = () => {
                                         </select>
                                     </div>
 
+                                    <!-- TITRE -->
                                     <div>
-                                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Titre</label>
+                                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Titre de l'événement</label>
                                         <input type="text" v-model="form.title" class="block w-full rounded-md border-0 py-2.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-sky-600 sm:text-sm" placeholder="Ex: Intervention Domicile...">
                                         <p v-if="form.errors.title" class="text-red-500 text-xs mt-1">{{ form.errors.title }}</p>
                                     </div>
 
+                                    <!-- DATES -->
                                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                         <div>
                                             <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Début</label>
@@ -187,9 +232,29 @@ const submitEvent = () => {
                                             </div>
                                         </div>
                                     </div>
+                                    <!-- RÉCURRENCE (Optionnel) -->
+                                    <div class="bg-indigo-50 p-4 rounded-lg border border-indigo-100">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <label class="block text-xs font-bold text-indigo-800 uppercase">Répéter cet événement ?</label>
+                                            <select v-model="form.recurrence" class="text-sm rounded border-indigo-200 py-1 px-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                                <option value="none">Non, une seule fois</option>
+                                                <option value="daily">Tous les jours</option>
+                                                <option value="weekly">Toutes les semaines</option>
+                                                <option value="monthly">Tous les mois</option>
+                                            </select>
+                                        </div>
 
+                                        <div v-if="form.recurrence !== 'none'" class="animate-fade-in mt-3">
+                                            <label class="block text-xs font-bold text-indigo-800 uppercase mb-1">Jusqu'au</label>
+                                            <input type="date" v-model="form.recurrence_end" class="block w-full rounded-md border-indigo-200 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                            <p class="text-xs text-indigo-600 mt-1">
+                                                Cela créera plusieurs événements indépendants.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <!-- TYPE -->
                                     <div>
-                                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Type</label>
+                                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Type d'activité</label>
                                         <select v-model="form.type" class="block w-full rounded-md border-0 py-2.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-sky-600 sm:text-sm">
                                             <option value="intervention">Intervention Client 🟢</option>
                                             <option value="reunion">Réunion / Synthèse 🔵</option>
@@ -197,16 +262,17 @@ const submitEvent = () => {
                                         </select>
                                     </div>
 
+                                    <!-- NOTES -->
                                     <div>
-                                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Notes</label>
-                                        <textarea v-model="form.description" rows="3" class="block w-full rounded-md border-0 py-2 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-sky-600 sm:text-sm" placeholder="Détails..."></textarea>
+                                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Notes (Optionnel)</label>
+                                        <textarea v-model="form.description" rows="3" class="block w-full rounded-md border-0 py-2 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-sky-600 sm:text-sm" placeholder="Détails supplémentaires..."></textarea>
                                     </div>
 
                                     <div class="mt-8 flex justify-end gap-3 pt-4 border-t border-slate-100">
-                                        <button type="button" @click="closeModal" class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50 focus:outline-none">
+                                        <button type="button" @click="closeModal" class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-500">
                                             Annuler
                                         </button>
-                                        <button type="submit" :disabled="form.processing" class="px-6 py-2 text-sm font-bold text-white bg-sky-600 rounded-md hover:bg-sky-700 focus:outline-none shadow-sm">
+                                        <button type="submit" :disabled="form.processing" class="px-6 py-2 text-sm font-bold text-white bg-sky-600 rounded-md hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-600 shadow-sm transition-all transform active:scale-95">
                                             {{ form.processing ? 'Ajout...' : 'Ajouter au planning' }}
                                         </button>
                                     </div>
@@ -222,18 +288,18 @@ const submitEvent = () => {
 </template>
 
 <style>
-/* CSS inchangé */
-.fc-theme-standard td, .fc-theme-standard th { border-color: #f1f5f9; }
-.fc-scrollgrid { border: none !important; }
-.fc-col-header-cell-cushion { color: #64748b; font-weight: 600; text-transform: uppercase; font-size: 0.75rem; padding: 10px 0 !important; }
-.fc-day-today { background-color: transparent !important; }
-.fc-day-today .fc-col-header-cell-cushion { color: #0ea5e9; }
-.fc-button-primary { background-color: white !important; color: #475569 !important; border: 1px solid #e2e8f0 !important; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); font-weight: 600 !important; text-transform: capitalize; border-radius: 8px !important; padding: 6px 16px !important; }
-.fc-button-primary:hover { background-color: #f8fafc !important; }
-.fc-button-active { background-color: #f1f5f9 !important; color: #0f172a !important; }
-.fc-toolbar-title { font-size: 1.25rem !important; font-weight: 700 !important; color: #1e293b; text-transform: capitalize; }
-.fc-event { border: none !important; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-radius: 6px !important; padding: 2px 4px; font-size: 0.8rem; font-weight: 600; }
-.fc-event-main { color: inherit; }
-.fc-timegrid-now-indicator-line { border-color: #ef4444; border-width: 2px; }
-.fc-timegrid-now-indicator-arrow { border-color: #ef4444; border-width: 6px; }
+  /* CSS FullCalendar inchangé */
+  .fc-theme-standard td, .fc-theme-standard th { border-color: #f1f5f9; }
+  .fc-scrollgrid { border: none !important; }
+  .fc-col-header-cell-cushion { color: #64748b; font-weight: 600; text-transform: uppercase; font-size: 0.75rem; padding: 10px 0 !important; }
+  .fc-day-today { background-color: transparent !important; }
+  .fc-day-today .fc-col-header-cell-cushion { color: #0ea5e9; }
+  .fc-button-primary { background-color: white !important; color: #475569 !important; border: 1px solid #e2e8f0 !important; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); font-weight: 600 !important; text-transform: capitalize; border-radius: 8px !important; padding: 6px 16px !important; }
+  .fc-button-primary:hover { background-color: #f8fafc !important; }
+  .fc-button-active { background-color: #f1f5f9 !important; color: #0f172a !important; }
+  .fc-toolbar-title { font-size: 1.25rem !important; font-weight: 700 !important; color: #1e293b; text-transform: capitalize; }
+  .fc-event { border: none !important; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-radius: 6px !important; padding: 2px 4px; font-size: 0.8rem; font-weight: 600; }
+  .fc-event-main { color: inherit; }
+  .fc-timegrid-now-indicator-line { border-color: #ef4444; border-width: 2px; }
+  .fc-timegrid-now-indicator-arrow { border-color: #ef4444; border-width: 6px; }
 </style>
